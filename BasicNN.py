@@ -11,7 +11,7 @@ class NeuralNetwork():
 		self.NumOfHidden = 100          # num of hidden layer
 		self.NumOfOutput = 10			# num of output layer
 		self.NumOfInput  = 784			# num of input
-		self.rate = 0.1					# learning rate
+		self.rate = 0.1          		# learning rate
 		self.w1 = np.zeros([self.NumOfHidden, self.NumOfInput])
 		self.dw1 = np.zeros([self.NumOfHidden, self.NumOfInput])
 		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
@@ -60,41 +60,53 @@ class NeuralNetwork():
 			a1 = np.zeros(self.NumOfHidden)
 			for i, wi in enumerate(self.w1):
 				a1[i] = self.Sigmoid(np.dot(inputs, wi))
-
+			#print "a1", a1
 			#a1 = np.append([1], a1);
 
 			## compute output for output layer and store it in a2
-			a2 = np.zeros(self.NumOfOutput)
+			output = np.zeros(self.NumOfOutput)
 			for j, wj in enumerate(self.w2):
-				a2[j] = np.dot(a1, wj)
-
+				output[j] = np.dot(a1, wj)
+			#print output, "output"
 			## compute softmax
-			output = self.Softmax(a2)
+			a2 = self.Softmax(output)
+
+			#print "output: ", a2
 
 			## now doing backprop, hidden -> output
+			## first comput target
+			#print target 
+			t = np.zeros(self.NumOfOutput)
+			for i in range(self.NumOfOutput):
+				if (i== target): 
+					t[i] = 1
+			t = self.Softmax(t)
+
 			deltak = np.zeros(self.NumOfOutput)
-			for k in range(NumOfOutput):
-				if (k == target-1):
-					deltak[k] = (1-a2[k])*a2[k]*(1-a2[k])
-				else:
-					deltak[k] = (0-a2[k])*a2[k]*(1-a2[k])
+			for k in range(self.NumOfOutput):	
+					deltak[k] = (t[k]-a2[k])*a2[k]*(1-a2[k])
+		
+			#print "deltak", deltak
 
 			## input -> hidden
 			deltaj = np.zeros(self.NumOfHidden)
-			for j in range(NumOfHidden):
-				delta[j] = np.dot(deltak, w2[:,j])*a1[j]*(1-a1[j])
-
+			for j in range(self.NumOfHidden):
+				deltaj[j] = np.dot(deltak, self.w2[:,j])*a1[j]*(1-a1[j])
+			#print deltaj
 			## update w1 & w2
 			for x2 in range(self.w2.shape[0]):
 				for y2 in range(self.w2.shape[1]): 
+					# print "delta", deltak[x2]
+					# print "a1", a1[y2]
+					# print "------------"
 					self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 
 			for x1 in range(self.w1.shape[0]): 
 				for y1 in range(self.w1.shape[1]):
+					#print deltaj[x1]*inputs[y1]*self.rate
 					self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
 			
-
-			
+			print self.w2[0][0]
 				
 
 
