@@ -11,12 +11,12 @@ class NeuralNetwork():
 		self.NumOfHidden = 100          # num of hidden layer
 		self.NumOfOutput = 10			# num of output layer
 		self.NumOfInput  = 784			# num of input
-		self.rate = 0.1          		# learning rate
+		self.rate = 0.01          		# learning rate
 		self.w1 = np.zeros([self.NumOfHidden, self.NumOfInput])
-		self.dw1 = np.zeros([self.NumOfHidden, self.NumOfInput])
+		
 		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
 		self.w2 = np.zeros([self.NumOfOutput, self.NumOfHidden])
-		self.dw2 = np.zeros([self.NumOfOutput, self.NumOfHidden])
+		
 		# w1: weight hidden layer -> output, w1[i][j]: jth hidden layer -> ith output
 		
 		b1 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfInput)
@@ -47,6 +47,7 @@ class NeuralNetwork():
 		 
 
 	def BackProp(self, train_file_name):
+		error = 0
 		for l in open(train_file_name).read().splitlines():
 
 			## read the txt file: target, input(784+1)
@@ -70,7 +71,6 @@ class NeuralNetwork():
 			#print output, "output"
 			## compute softmax
 			a2 = self.Softmax(output)
-
 			#print "output: ", a2
 
 			## now doing backprop, hidden -> output
@@ -82,31 +82,49 @@ class NeuralNetwork():
 					t[i] = 1
 			t = self.Softmax(t)
 
+			error = self.Error(t, a2)
+			print "error", error
 			deltak = np.zeros(self.NumOfOutput)
 			for k in range(self.NumOfOutput):	
 					deltak[k] = (t[k]-a2[k])*a2[k]*(1-a2[k])
-		
 			#print "deltak", deltak
 
 			## input -> hidden
 			deltaj = np.zeros(self.NumOfHidden)
 			for j in range(self.NumOfHidden):
 				deltaj[j] = np.dot(deltak, self.w2[:,j])*a1[j]*(1-a1[j])
-			#print deltaj
+			
+
 			## update w1 & w2
 			for x2 in range(self.w2.shape[0]):
+				
 				for y2 in range(self.w2.shape[1]): 
-					# print "delta", deltak[x2]
-					# print "a1", a1[y2]
-					# print "------------"
 					self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 
 			for x1 in range(self.w1.shape[0]): 
 				for y1 in range(self.w1.shape[1]):
 					#print deltaj[x1]*inputs[y1]*self.rate
 					self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
-			
-			print self.w2[0][0]
+
+		return error/3000
+	
+	def Error(self, t, a):
+		error = 0
+		for i in range(t.size):
+			error += -t[i]*np.log(a[i])
+		return error
+
+
+
+	def trainNN(self):
+		self.Initialization()
+		n = 0
+		while(n < 200):
+			error = self.BackProp(sys.argv[1])
+			print "fin_error", error
+			n += 1
+
+
 				
 
 
