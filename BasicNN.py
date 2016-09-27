@@ -12,25 +12,15 @@ class NeuralNetwork():
 		self.NumOfOutput = 10			# num of output layer
 		self.NumOfInput  = 784			# num of input
 		self.rate = 0.01          		# learning rate
-		self.w1 = np.zeros([self.NumOfHidden, self.NumOfInput])
-		
-		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
-		self.w2 = np.zeros([self.NumOfOutput, self.NumOfHidden])
-		
-		# w1: weight hidden layer -> output, w1[i][j]: jth hidden layer -> ith output
-		
+
 		b1 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfInput)
 		b2 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfOutput)
 
-		for x1 in range(self.w1.shape[0]): 
-			for y1 in range(self.w1.shape[1]):
-				self.w1[x1][y1] = np.random.uniform(-b1, b1)
+		self.w1 = np.random.uniform(-b1, b1, [self.NumOfHidden, self.NumOfInput])
+		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
+		self.w2 = np.random.uniform(-b2, b2, [self.NumOfOutput, self.NumOfHidden])
+		# w2: weight hidden layer -> output, w2[i][j]: jth hidden layer -> ith output		
 
-		for x2 in range(self.w2.shape[0]):
-			for y2 in range(self.w2.shape[1]): 
-				self.w2[x2][y2] = np.random.uniform(-b2, b2)
-
-	
 	def Sigmoid(self, aij):
 		## we use sigmoid as the activation function in every hidden layer
 		## aj: the linear combination of the input
@@ -40,9 +30,7 @@ class NeuralNetwork():
 
 
 	def Softmax(self, a):
-		output = np.zeros(a.size)
-		for i, ai in enumerate(a):
-			output[i] = np.exp(ai)
+		output = np.exp(a)
 		return	output/sum(output)
 		 
 
@@ -58,36 +46,25 @@ class NeuralNetwork():
 			inputs = np.array(map(float, line))
 
 			## compute output for hidden layer and store it in a1
-			a1 = np.zeros(self.NumOfHidden)
-			for i, wi in enumerate(self.w1):
-				a1[i] = self.Sigmoid(np.dot(inputs, wi))
-			#print "a1", a1
-			#a1 = np.append([1], a1);
-
+			a1 = self.Sigmoid(np.dot(self.w1, inputs))
+			
 			## compute output for output layer and store it in a2
-			output = np.zeros(self.NumOfOutput)
-			for j, wj in enumerate(self.w2):
-				output[j] = np.dot(a1, wj)
-			#print output, "output"
+			output = np.dot(self.w2, a1)
+			
 			## compute softmax
 			a2 = self.Softmax(output)
-			#print "output: ", a2
-
+			
 			## now doing backprop, hidden -> output
-			## first comput target
-			#print target 
+			## first comput target 
 			t = np.zeros(self.NumOfOutput)
-			for i in range(self.NumOfOutput):
-				if (i== target): 
-					t[i] = 1
+			t[target] = 1
 			t = self.Softmax(t)
 
 			error = self.Error(t, a2)
 			print "error", error
-			deltak = np.zeros(self.NumOfOutput)
-			for k in range(self.NumOfOutput):	
-					deltak[k] = (t[k]-a2[k])*a2[k]*(1-a2[k])
-			#print "deltak", deltak
+	
+			deltak = (t-a2)*a2*(1-a2)
+			
 
 			## input -> hidden
 			deltaj = np.zeros(self.NumOfHidden)
@@ -97,7 +74,6 @@ class NeuralNetwork():
 
 			## update w1 & w2
 			for x2 in range(self.w2.shape[0]):
-				
 				for y2 in range(self.w2.shape[1]): 
 					self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 
@@ -132,6 +108,10 @@ if __name__ == "__main__":
 
 	NN = NeuralNetwork()
 	NN.Initialization()
-	NN.BackProp(sys.argv[1])
+	test = np.array([1,2,3,4,5])
+	print test
+	test2 = np.array([4,5,7,8,9])
+	print test*test2
+	#NN.BackProp(sys.argv[1])
 
 	
