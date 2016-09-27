@@ -60,8 +60,8 @@ class NeuralNetwork():
 			t[target] = 1
 			t = self.Softmax(t)
 
-			error = self.Error(t, a2)
-			print "error", error
+			error += -self.Error(t, a2)
+			# print "error", error
 	
 			deltak = (t-a2)*a2*(1-a2)
 			
@@ -69,14 +69,18 @@ class NeuralNetwork():
 			deltaj = np.dot(deltak, self.w2)*a1*(1-a1)
 			
 			## update w1 & w2
-			for x2 in range(self.w2.shape[0]):
-				for y2 in range(self.w2.shape[1]): 
-					self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
+			# for x2 in range(self.w2.shape[0]):
+			# 	for y2 in range(self.w2.shape[1]): 
+			# 		self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
+			
+			self.w2 += np.tile(deltak, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate
+			
+			# for x1 in range(self.w1.shape[0]): 
+			# 	for y1 in range(self.w1.shape[1]):
+			# 		#print deltaj[x1]*inputs[y1]*self.rate
+			# 		self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
 
-			for x1 in range(self.w1.shape[0]): 
-				for y1 in range(self.w1.shape[1]):
-					#print deltaj[x1]*inputs[y1]*self.rate
-					self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
+			self.w1 += np.tile(deltaj, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate
 
 		return error/3000
 	
@@ -90,18 +94,20 @@ class NeuralNetwork():
 	def trainNN(self):
 		self.Initialization()
 		n = 0
+		start_time = time.time()
 		while(n < 200):
 			error = self.BackProp(sys.argv[1])
 			print "fin_error", error
 			n += 1
-
-
+		return error
+		print("--- %s seconds ---" % (time.time() - start_time))
 				
 
 
 if __name__ == "__main__":
 
 	NN = NeuralNetwork()
-	NN.trainNN()
+	error = NN.trainNN()
+	print "Error after 200 iteration: ", error
 
 	
