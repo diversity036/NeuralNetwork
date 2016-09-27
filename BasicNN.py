@@ -38,7 +38,7 @@ class NeuralNetwork():
 		error = 0
 		for l in open(train_file_name).read().splitlines():
 
-			## read the txt file: target, input(784+1)
+			## read the txt file: target, input(784)
 			line = l.split(',')
 			target = int(line[-1])
 			del line[-1]
@@ -65,13 +65,9 @@ class NeuralNetwork():
 	
 			deltak = (t-a2)*a2*(1-a2)
 			
-
 			## input -> hidden
-			deltaj = np.zeros(self.NumOfHidden)
-			for j in range(self.NumOfHidden):
-				deltaj[j] = np.dot(deltak, self.w2[:,j])*a1[j]*(1-a1[j])
+			deltaj = np.dot(deltak, self.w2)*a1*(1-a1)
 			
-
 			## update w1 & w2
 			for x2 in range(self.w2.shape[0]):
 				for y2 in range(self.w2.shape[1]): 
@@ -85,10 +81,9 @@ class NeuralNetwork():
 		return error/3000
 	
 	def Error(self, t, a):
-		error = 0
-		for i in range(t.size):
-			error += -t[i]*np.log(a[i])
-		return error
+		
+		return	sum(t*np.log(a))
+		
 
 
 
@@ -107,11 +102,6 @@ class NeuralNetwork():
 if __name__ == "__main__":
 
 	NN = NeuralNetwork()
-	NN.Initialization()
-	test = np.array([1,2,3,4,5])
-	print test
-	test2 = np.array([4,5,7,8,9])
-	print test*test2
-	#NN.BackProp(sys.argv[1])
+	NN.trainNN()
 
 	
