@@ -21,6 +21,7 @@ class NeuralNetwork():
 		self.valid_err   = []
 		self.train_class_err = []
 		self.valid_class_err = []
+		self.dropout = args.dropout
 		self.alpha = args.momentum
 		c1 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfInput)
 		c2 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfOutput)
@@ -98,7 +99,7 @@ class NeuralNetwork():
 			# 		self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 			
 			self.w2 += np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw2
-			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate
+			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate d+ self.alpha*self.dw2
 			
 			
 			# for x1 in range(self.w1.shape[0]): 
@@ -107,7 +108,7 @@ class NeuralNetwork():
 			# 		self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
 
 			self.w1 += np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate + self.alpha*self.dw1
-			self.dw1 = np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate
+			self.dw1 = np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate + self.alpha*self.dw1
 			
 			self.b2 += delta2
 			self.b1 += delta1
@@ -195,6 +196,7 @@ if __name__ == "__main__":
 	start_time = time.time()
 	parser = argparse.ArgumentParser(description='script for testing')
 	parser.add_argument('filename', nargs='+')
+	parser.add_argument('--dropout', type=float, defualt=0.5, help='the dropout vallues')
 	parser.add_argument('--rate', type=float, default=0.1, help='The learning rate')
 	parser.add_argument('--epoch', type=int, default=200, help='the number of epoch')
 	parser.add_argument('--momentum', '-m', type=float, default=0, help='momentum parameter')
