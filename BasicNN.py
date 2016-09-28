@@ -4,23 +4,24 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 import time
+import argparse
 class NeuralNetwork():
 
-	def Initialization(self):
+	def Initialization(self, args):
 
-		self.NumOfHidden = 100          # num of hidden layer
+		self.NumOfHidden = args.hidden          # num of hidden layer
 		self.NumOfOutput = 10			# num of output layer
 		self.NumOfInput  = 784			# num of input
 		self.NumOfTrain  = 3000			# num of training data
 		self.NumOfValid  = 1000			# num of validation data
 		self.NumOfTest   = 3000			# num of testing data
-		self.rate        = 0.1          # learning rate
-		self.NumOfEpoch  = 150
+		self.rate        = args.rate          # learning rate
+		self.NumOfEpoch  = args.epoch			# num of epoch
 		self.train_err   = []
 		self.valid_err   = []
 		self.train_class_err = []
 		self.valid_class_err = []
-		self.alpha = 0.9
+		self.alpha = args.momentum
 		c1 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfInput)
 		c2 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfOutput)
 		
@@ -111,22 +112,22 @@ class NeuralNetwork():
 			self.b2 += delta2
 			self.b1 += delta1
 			
-		return error/self.NumOfTrain, true_label/float(self.NumOfTrain)
+		return error/self.NumOfTrain, 1-true_label/float(self.NumOfTrain)
 	
 	def Error(self, t, a):		
 		return sum(t*np.log(a))
 		
 
-	def Train(self):
-		self.Initialization()
+	def Train(self, args):
+		self.Initialization(args)
 		
 		n = 0
 		while(n < self.NumOfEpoch):
-			error, class_error = self.BackProp(sys.argv[1])
+			error, class_error = self.BackProp(args.filename[0])
 			print "training error", error, class_error
 			self.train_err.append(error)
 			self.train_class_err.append(class_error)
-			error_v, class_error_v = self.Valid(sys.argv[2])
+			error_v, class_error_v = self.Valid(args.filename[1])
 			print "validation error", error_v, class_error_v
 			self.valid_err.append(error_v)
 			self.valid_class_err.append(class_error_v)
@@ -168,15 +169,15 @@ class NeuralNetwork():
 
 			error += -self.Error(t, a2)
 		
-		return error/self.NumOfValid, true_label/float(self.NumOfValid)
+		return error/self.NumOfValid, 1-true_label/float(self.NumOfValid)
 			
 		
 	def Plot(self):
 		t = np.arange(0, self.NumOfEpoch, 1)
-		plt.plot(t, self.train_err, 'r--', t, self.valid_err, 'b--', t, self.train_class_err, 'rs', t, self.valid_class_err, 'bs')
-		
+		plt.plot(t, self.train_err, 'r--', t, self.valid_err, 'b--')
 		plt.show()
-		
+		plt.plot(t, self.train_class_err, 'r--', t, self.valid_class_err, 'b--')
+		plt.show()
 		
 	def PlotWeight(self):
 	
@@ -192,8 +193,15 @@ class NeuralNetwork():
 
 if __name__ == "__main__":
 	start_time = time.time()
+	parser = argparse.ArgumentParser(description='script for testing')
+	parser.add_argument('filename', nargs='+')
+	parser.add_argument('--rate', type=float, default=0.1, help='The learning rate')
+	parser.add_argument('--epoch', type=int, default=200, help='the number of epoch')
+	parser.add_argument('--momentum', '-m', type=float, default=0, help='momentum parameter')
+	parser.add_argument('--hidden', type=int, nargs='+', default = 100, help='the number of hidden units for each layer')
+	args = parser.parse_args()
 	NN = NeuralNetwork()
-	NN.Train()
+	NN.Train(args)
 	NN.Plot()
 	NN.PlotWeight()
 	print("--- %s seconds ---" % (time.time() - start_time))
