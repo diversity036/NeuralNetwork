@@ -14,12 +14,13 @@ class NeuralNetwork():
 		self.NumOfTrain  = 3000			# num of training data
 		self.NumOfValid  = 1000			# num of validation data
 		self.NumOfTest   = 3000			# num of testing data
-		self.rate        = 0.1         # learning rate
+		self.rate        = 0.1          # learning rate
+		self.NumOfEpoch  = 150
 		self.train_err   = []
 		self.valid_err   = []
 		self.train_class_err = []
 		self.valid_class_err = []
-		self.NumOfEpoch  = 200
+		self.alpha = 0.9
 		c1 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfInput)
 		c2 = np.sqrt(6)/np.sqrt(self.NumOfHidden + self.NumOfOutput)
 		
@@ -30,7 +31,9 @@ class NeuralNetwork():
 		self.w1 = np.random.uniform(-c1, c1, [self.NumOfHidden, self.NumOfInput])
 		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
 		self.w2 = np.random.uniform(-c2, c2, [self.NumOfOutput, self.NumOfHidden])
-		# w2: weight hidden layer -> output, w2[i][j]: jth hidden layer -> ith output		
+		# w2: weight hidden layer -> output, w2[i][j]: jth hidden layer -> ith output
+		self.dw1 = np.zeros(self.w1.shape)
+		self.dw2 = np.zeros(self.w2.shape)		
 
 	def Sigmoid(self, aij):
 		## we use sigmoid as the activation function in every hidden layer
@@ -48,6 +51,8 @@ class NeuralNetwork():
 	def BackProp(self, train_file_name):
 		error = 0
 		true_label = 0
+		
+		
 		for l in open(train_file_name).read().splitlines():
 
 			## read the txt file: target, input(784)
@@ -91,17 +96,17 @@ class NeuralNetwork():
 			# 	for y2 in range(self.w2.shape[1]): 
 			# 		self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 			
-			self.w2 += np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate
+			self.w2 += np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw2
+			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate
 			
-			#self.w2 += np.dot(deltak.transpose(), a1)*self.rate
 			
 			# for x1 in range(self.w1.shape[0]): 
 			# 	for y1 in range(self.w1.shape[1]):
 			# 		#print deltaj[x1]*inputs[y1]*self.rate
 			# 		self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
 
-			self.w1 += np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate
-			#self.w1 += np.dot(deltaj, inputs)*self.rate
+			self.w1 += np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate + self.alpha*self.dw1
+			self.dw1 = np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate
 			
 			self.b2 += delta2
 			self.b1 += delta1
@@ -164,10 +169,7 @@ class NeuralNetwork():
 			error += -self.Error(t, a2)
 		
 		return error/self.NumOfValid, true_label/float(self.NumOfValid)
-		
-		
-		
-		
+			
 		
 	def Plot(self):
 		t = np.arange(0, self.NumOfEpoch, 1)
@@ -175,6 +177,16 @@ class NeuralNetwork():
 		
 		plt.show()
 		
+		
+	def PlotWeight(self):
+	
+		plotimg = np.zeros([280, 280])
+		for x in range(plotimg.shape[0]):
+			for y in range(plotimg.shape[1]):
+				plotimg[x][y] = self.w1[10*(x/28) + y/28][28*(x%28) + y%28]
+				
+		plt.imshow(plotimg, cmap='gray')
+		plt.show()
 				
 
 
@@ -183,6 +195,7 @@ if __name__ == "__main__":
 	NN = NeuralNetwork()
 	NN.Train()
 	NN.Plot()
+	NN.PlotWeight()
 	print("--- %s seconds ---" % (time.time() - start_time))
 
 	
