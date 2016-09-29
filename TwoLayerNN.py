@@ -15,13 +15,14 @@ class NeuralNetwork():
 		self.NumOfTrain  = 3000			# num of training data
 		self.NumOfValid  = 1000			# num of validation data
 		self.NumOfTest   = 3000			# num of testing data
-		self.rate        = 0.1          # learning rate
-		self.NumOfEpoch  = 150
+		self.rate        = args.rate          # learning rate
+		self.NumOfEpoch  = args.epoch
 		self.train_err   = []
 		self.valid_err   = []
 		self.train_class_err = []
 		self.valid_class_err = []
-		self.alpha = 0.9
+		self.alpha = args.momentum
+        self.dropout = args.dropout
 		c1 = np.sqrt(6)/np.sqrt(self.NumOfHidden1 + self.NumOfInput)
 		c2 = np.sqrt(6)/np.sqrt(self.NumOfHidden2 + self.NumOfHidden1)
 		c3 = np.sqrt(6)/np.sqrt(self.NumOfOutput + self.NumOfHidden2)
@@ -30,10 +31,10 @@ class NeuralNetwork():
 		self.b2 = np.random.uniform(-c2, c2, self.NumOfHidden2)
 		self.b3 = np.random.uniform(-c3, c3, self.NumOfOutput)
 		
-		self.w1 = np.random.uniform(-c1, c1, [self.NumOfHidden, self.NumOfInput])
+		self.w1 = np.random.uniform(-c1, c1, [self.NumOfHidden1, self.NumOfInput])
 		# w1: weight input -> hidden layer, w1[i][j]: jth input -> ith hidden layer
-		self.w2 = np.random.uniform(-c2, c2, [self.NumOfOutput, self.NumOfHidden])
-		self.w3 = np.random.uniform(-c3, c3, [self.NumOfOutput, self.NumOfHidden])
+		self.w2 = np.random.uniform(-c2, c2, [self.NumOfHidden2, self.NumOfHidden1])
+		self.w3 = np.random.uniform(-c3, c3, [self.NumOfOutput, self.NumOfHidden2])
 		# w3: weight hidden layer -> output, w2[i][j]: jth hidden layer -> ith output
 		self.dw1 = np.zeros(self.w1.shape)
 		self.dw2 = np.zeros(self.w2.shape)	
@@ -72,11 +73,13 @@ class NeuralNetwork():
 			
 			## compute output for output layer and store it in a2
 			z2 = np.dot(self.w2, a1) + self.b2
-			
 			## compute softmax
-			a2 = self.Softmax(z2)
+			a2 = self.Sigmoid(z2)
 			
-			if (a2.argmax()==target):
+            z3 = np.dot(self.w3, a2) + self.b3
+            a3 = self.Softmax(z3)
+            
+			if (z3.argmax()==target):
 				true_label += 1
 			
 			## now doing backprop, hidden -> output
@@ -85,33 +88,41 @@ class NeuralNetwork():
 			t[target] = 1
 			#t = self.Softmax(t)
 
-			error += -self.Error(t, a2)
+			error += -self.Error(t, a3)
 			# print "error", error
 	
 			#deltak = (t-a2)*a2*(1-a2)
 			
-			delta2 = t - a2
+			delta3 = t - a3
 			
 			## input -> hidden
-			delta1 = np.dot(delta2, self.w2)*a1*(1-a1)
+			delta2 = np.dot(delta3, self.w3)*a2*(1-a2)
+            
+            delta1 = np.dot(delta2, self.w2)*a1*(1-a1)
 			
 			## update w1 & w2
 			# for x2 in range(self.w2.shape[0]):
 			# 	for y2 in range(self.w2.shape[1]): 
 			# 		self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 			
-			self.w2 += np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw2
-			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate
+			self.w3 += np.tile(delta3, (self.NumOfHidden2,1)).transpose()*np.tile(a2, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw3
+
+			self.dw3 = np.tile(delta3, (self.NumOfHidden2,1)).transpose()*np.tile(a2, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw3
 			
 			
 			# for x1 in range(self.w1.shape[0]): 
 			# 	for y1 in range(self.w1.shape[1]):
 			# 		#print deltaj[x1]*inputs[y1]*self.rate
 			# 		self.w1[x1][y1] += deltaj[x1]*inputs[y1]*self.rate
-
-			self.w1 += np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate + self.alpha*self.dw1
-			self.dw1 = np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden, 1))*self.rate
+            self.w2 += np.tile(delta2, (self.NumOfHidden1,1)).transpose()*np.tile(a1, (self.NumOfHidden2, 1))*self.rate + self.alpha*self.dw2
+            
+            self.dw2 = np.tile(delta2, (self.NumOfHidden1,1)).transpose()*np.tile(a1, (self.NumOfHidden2, 1))*self.rate + self.alpha*self.dw2
+            
+            
+			self.w1 += np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden1, 1))*self.rate + self.alpha*self.dw1
+			self.dw1 = np.tile(delta1, (self.NumOfInput,1)).transpose()*np.tile(inputs, (self.NumOfHidden1, 1))*self.rate + self.alpha*self.dw1
 			
+            self.b3 += delta3
 			self.b2 += delta2
 			self.b1 += delta1
 			
@@ -126,11 +137,11 @@ class NeuralNetwork():
 		
 		n = 0
 		while(n < self.NumOfEpoch):
-			error, class_error = self.BackProp(sys.argv[1])
+			error, class_error = self.BackProp(args.filename[0])
 			print "training error", error, class_error
 			self.train_err.append(error)
 			self.train_class_err.append(class_error)
-			error_v, class_error_v = self.Valid(sys.argv[2])
+			error_v, class_error_v = self.Valid(args.filename[1])
 			print "validation error", error_v, class_error_v
 			self.valid_err.append(error_v)
 			self.valid_class_err.append(class_error_v)
@@ -157,11 +168,13 @@ class NeuralNetwork():
 			
 			## compute output for output layer and store it in a2
 			z2 = np.dot(self.w2, a1) + self.b2
-			
 			## compute softmax
-			a2 = self.Softmax(z2)
+			a2 = self.Sigmoid(z2)
 			
-			if (a2.argmax()==target):
+            z3 = np.dot(self.w3, a2) + self.b3
+            a3 = self.Softmax(z3)
+            
+			if (z3.argmax()==target):
 				true_label += 1
 			
 			## now doing backprop, hidden -> output
@@ -170,7 +183,7 @@ class NeuralNetwork():
 			t[target] = 1
 			#t = self.Softmax(t)
 
-			error += -self.Error(t, a2)
+			error += -self.Error(t, a3)
 		
 		return error/self.NumOfValid, true_label/float(self.NumOfValid)
 			
@@ -196,8 +209,16 @@ class NeuralNetwork():
 
 if __name__ == "__main__":
 	start_time = time.time()
+    parser = argparse.ArgumentParser(description='script for testing')
+	parser.add_argument('filename', nargs='+')
+	parser.add_argument('--dropout', type=float, default=1, help='the dropout vallues')
+	parser.add_argument('--rate', type=float, default=0.1, help='The learning rate')
+	parser.add_argument('--epoch', type=int, default=200, help='the number of epoch')
+	parser.add_argument('--momentum', '-m', type=float, default=0, help='momentum parameter')
+	parser.add_argument('--hidden', type=int, default = 100, help='the number of hidden units for each layer')
+	args = parser.parse_args()
 	NN = NeuralNetwork()
-	NN.Train()
+	NN.Train(args)
 	NN.Plot()
 	NN.PlotWeight()
 	print("--- %s seconds ---" % (time.time() - start_time))
