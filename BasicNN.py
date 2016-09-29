@@ -99,7 +99,7 @@ class NeuralNetwork():
 			# 		self.w2[x2][y2] += deltak[x2]*a1[y2]*self.rate 
 			
 			self.w2 += np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw2
-			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate d+ self.alpha*self.dw2
+			self.dw2 = np.tile(delta2, (self.NumOfHidden,1)).transpose()*np.tile(a1, (self.NumOfOutput, 1))*self.rate + self.alpha*self.dw2
 			
 			
 			# for x1 in range(self.w1.shape[0]): 
@@ -152,8 +152,8 @@ class NeuralNetwork():
 			## compute output for hidden layer and store it in a1
 			z1 = np.dot(self.w1, inputs)+ self.b1
 			a1 = self.Sigmoid(z1)
-			mask = np.random.rand(a1.shape) < p / p
-			a1 *= mask
+			#mask = np.random.rand(a1.shape) < p / p
+			#a1 *= mask
 			## compute output for output layer and store it in a2
 			z2 = np.dot(self.w2, a1) + self.b2
 			
@@ -197,16 +197,16 @@ if __name__ == "__main__":
 	start_time = time.time()
 	parser = argparse.ArgumentParser(description='script for testing')
 	parser.add_argument('filename', nargs='+')
-	parser.add_argument('--dropout', type=float, defualt=1, help='the dropout vallues')
+	parser.add_argument('--dropout', type=float, default=1, help='the dropout vallues')
 	parser.add_argument('--rate', type=float, default=0.1, help='The learning rate')
 	parser.add_argument('--epoch', type=int, default=200, help='the number of epoch')
 	parser.add_argument('--momentum', '-m', type=float, default=0, help='momentum parameter')
-	parser.add_argument('--hidden', type=int, nargs='+', default = 100, help='the number of hidden units for each layer')
+	parser.add_argument('--hidden', type=int, default = 100, help='the number of hidden units for each layer')
 	args = parser.parse_args()
 	NN = NeuralNetwork()
 	NN.Train(args)
 	NN.Plot()
-	NN.PlotWeight()
+	#NN.PlotWeight()
 	print("--- %s seconds ---" % (time.time() - start_time))
 
 	
