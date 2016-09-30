@@ -26,12 +26,13 @@ class NeuralNetwork():
 		self.w = []																		# w
 		self.dw = []																	# dw
 		self.b = []																		# bias
+		self.db = []
 		for i in range(self.NumOfLayer-1):
 				c = np.sqrt(6)/np.sqrt(self.NumOfUnits[i+1] + self.NumOfUnits[i])
 				self.w.append(np.random.uniform(-c, c, [self.NumOfUnits[i+1], self.NumOfUnits[i]]))
 				self.dw.append(np.zeros(self.w[i].shape))
 				self.b.append(np.random.uniform(-c, c, self.NumOfUnits[i+1]))
-					
+				self.db.append(np.zeros(self.b[i].shape))	
 				
 	def TrainFeedForward(self, inputs):
 		activation = []				
@@ -58,10 +59,14 @@ class NeuralNetwork():
 #			n = self.NumOfLayer -2 -i 											# the layer that is being propagated
 #			delta = np.dot(delta, self.w[n+1])*activation[n]*(1-activation[n]) if (i!=0) else target - activation[-1]
 #			x = activation[n-1] if (n!=0) else inputs
-#			dw = np.tile(delta, (self.NumOfUnits[n],1)).transpose()*np.tile(x, (self.NumOfUnits[n+1],1))*self.rate + self.alpha*self.dw[n]
-#			self.w[n] += dw
-#			self.dw[n] = dw
-#			self.b[n] += delta
+#			#dw = np.tile(delta, (self.NumOfUnits[n],1)).transpose()*np.tile(x, (self.NumOfUnits[n+1],1))*self.rate + self.alpha*self.dw[n]
+#			self.dw[n] += np.tile(delta, (self.NumOfUnits[n],1)).transpose()*np.tile(x, (self.NumOfUnits[n+1],1))*self.rate + self.alpha*self.dw[n]
+#			#self.w[n] += dw
+#			#self.dw[n] += dw
+#			self.db[n] += delta
+#		
+#		self.w += self.dw
+#		self.b += self.db
 		delta2 = target - activation[-1]
 			
 		## input -> hidden
