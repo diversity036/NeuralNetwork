@@ -21,6 +21,8 @@ class NeuralNetwork():
 		self.valid_loss  = []													# cross entropy for validation set
 		self.train_err   = []													# classification error for training set
 		self.valid_err   = []													# classification error for validation set
+		self.test_loss   = []
+		self.test_err    = []
 		self.p           = args.dropout								# dropout probability
 		self.alpha       = args.momentum							# momentum
 		self.w = []																		# w
@@ -115,7 +117,7 @@ class NeuralNetwork():
 					
 		return loss/self.NumOfTrain, error/float(self.NumOfTrain)
 	
-	def Valid(self, valid_list):
+	def Valid(self, valid_list, length):
 	
 		loss = 0
 		error = 0
@@ -133,7 +135,7 @@ class NeuralNetwork():
 			t[target] = 1
 			loss += -self.Loss(t, a[-1])
 		
-		return loss/self.NumOfValid, error/float(self.NumOfValid)
+		return loss/length, error/float(length)
 		
 
 	def Main(self, args):
@@ -142,18 +144,25 @@ class NeuralNetwork():
 		
 		train_list = open(args.filename[0]).readlines()
 		valid_list = open(args.filename[1]).readlines()
+		test_list  = open(args.filename[2]).readlines()
 		
 		self.NumOfTrain = len(train_list)
 		self.NumOfValid = len(valid_list)
+		self.NumOfTest  = len(test_list)
 		
 		n = 0
 		
 		while(n < self.NumOfEpoch):
 				
-			loss_v, error_v = self.Valid(valid_list)
+			loss_v, error_v = self.Valid(valid_list, self.NumOfValid)
 			print "validation error", loss_v, error_v
 			self.valid_loss.append(loss_v)
 			self.valid_err.append(error_v)
+			
+			loss_t, error_t = self.Valid(test_list, self.NumOfTest)
+			print "test error", loss_t, error_t
+			self.test_loss.append(loss_t)
+			self.test_err.append(error_t)
 			
 			random.shuffle(train_list)
 			loss, error = self.Train(train_list)
@@ -182,9 +191,13 @@ class NeuralNetwork():
 		
 	def Plot(self):
 		t = np.arange(0, self.NumOfEpoch, 1)
-		plt.plot(t, self.train_loss, 'r--', t, self.valid_loss, 'b--')
+#		plt.plot(t, self.train_loss, 'r--', t, self.valid_loss, 'b--')
+#		plt.show()
+#		plt.plot(t, self.train_err, 'r--', t, self.valid_err, 'b--')
+#		plt.show()
+		plt.plot(t, self.train_loss, 'r--', t, self.valid_loss, 'b--', t, self.test_loss, 'g--')
 		plt.show()
-		plt.plot(t, self.train_err, 'r--', t, self.valid_err, 'b--')
+		plt.plot(t, self.train_err, 'r--', t, self.valid_err, 'b--', t, self.test_err, 'g--')
 		plt.show()
 
 		
